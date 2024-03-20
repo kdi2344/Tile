@@ -7,7 +7,7 @@ public class InputManager : MonoBehaviour
     [SerializeField] private Camera sceneCamera;
     private Vector3 lastPos;
     [SerializeField] private LayerMask placementLayermask;
-    public event Action OnClicked, OnExit;
+    public event Action OnClicked, OnExit, OnRightClicked;
 
     private void Update()
     {
@@ -18,6 +18,10 @@ public class InputManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             OnExit?.Invoke();
+        }
+        if (Input.GetMouseButtonDown(1))
+        {
+            OnRightClicked?.Invoke();
         }
     }
 
