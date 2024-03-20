@@ -359,6 +359,7 @@
 "Assets/Script/InputManager.cs"
 "Assets/Script/ObjectsDatabase.cs"
 "Assets/Script/PlacementSystem.cs"
+"Assets/Script/PreviewSystem.cs"
 -langversion:9.0
 
 /deterministic
