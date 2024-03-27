@@ -19,6 +19,7 @@ public class PlacementSystem : MonoBehaviour
     public List<GameObject> placedTile;
 
     [SerializeField] private Transform tileParent;
+    [SerializeField] private Transform furnParent;
 
     [SerializeField] private PreviewSystem previewSystem;
 
@@ -26,9 +27,13 @@ public class PlacementSystem : MonoBehaviour
 
     private int rot = 0;
     private bool isTile =false;
+    private bool isRemove = false;
+
+    private int start = 0;
 
     private void Start()
     {
+        start = 0;
         StopPlacement();
         floorData = new();
         furnitureData = new();
@@ -41,12 +46,19 @@ public class PlacementSystem : MonoBehaviour
     }
     private void Update()
     {
+        Vector3 mousePos = inputManager.GetSelectedMapPosition();
+        Vector3Int gridPos;
+        if (isRemove)
+        {
+            gridPos = gridFurniture.WorldToCell(mousePos);
+            mouseIndicator.transform.position = mousePos;
+            previewSystem.UpdateRemovePosition(gridFurniture.CellToWorld(gridPos));
+            return;
+        }
         if (selectedObjectIndex < 0)
         {
             return;
         }
-        Vector3 mousePos = inputManager.GetSelectedMapPosition();
-        Vector3Int gridPos;
         if (isTile)
         {
             gridPos = gridTile.WorldToCell(mousePos);
@@ -101,9 +113,14 @@ public class PlacementSystem : MonoBehaviour
             isTile = false;
             previewSystem.StartShowingPlacementPreview(database.objectData[selectedObjectIndex].Prefab, database.objectData[selectedObjectIndex].Size, ID);
         }
-        inputManager.OnClicked += PlaceStructure;
-        inputManager.OnExit += StopPlacement;
-        inputManager.OnRightClicked += RotateStructure;
+        if (start == 0)
+        {
+            inputManager.OnClicked += PlaceStructure;
+            inputManager.OnExit += StopPlacement;
+            inputManager.OnRightClicked += RotateStructure;
+            start++;
+        }
+
     }
 
     private void PlaceStructure() //클릭으로 놓기
@@ -130,7 +147,14 @@ public class PlacementSystem : MonoBehaviour
         }
 
         GameObject newObject = Instantiate(database.objectData[selectedObjectIndex].Prefab);
-        newObject.transform.parent = tileParent;
+        if (isTile)
+        {
+            newObject.transform.parent = tileParent;
+        }
+        else
+        {
+            newObject.transform.parent = furnParent;
+        }
         newObject.transform.rotation = Quaternion.Euler(0, 90 * rot, 0);
         GridData selectedData = database.objectData[selectedObjectIndex].ID == 0 ? floorData : furnitureData;
         if (isTile)
@@ -185,6 +209,7 @@ public class PlacementSystem : MonoBehaviour
 
     public void StopPlacement() //설치 멈추기
     {
+        start = 0;
         previewSystem.StopShowingPreview();
         lastDetectedPosition = Vector3Int.zero;
         selectedObjectIndex = -1;
@@ -200,7 +225,28 @@ public class PlacementSystem : MonoBehaviour
     {
         rot++;
         rot = rot % 4; //0~3까지만
-        Debug.Log(rot);
         previewSystem.RotatePreview(rot);
     }
+
+    public void StartRemove()
+    {
+        StopPlacement();
+        gridFurnVisualization.SetActive(true);
+        isTile = false;
+        isRemove = true;
+        inputManager.OnClicked += RemoveFurn;
+    }
+
+    public void RemoveFurn()
+    {
+        Vector3 mousePos = inputManager.GetSelectedMapPosition();
+        Vector3Int gridPos = gridFurniture.WorldToCell(mousePos);
+        if (furnitureData.placedObjects.ContainsKey(gridPos))
+        {
+            int i = furnitureData.RemoveFurniture(gridPos);
+            Destroy(furnParent.GetChild(i).gameObject);
+        }
+    }
+
+
 }

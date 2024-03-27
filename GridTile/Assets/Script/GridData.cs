@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class GridData
@@ -76,6 +77,7 @@ public class GridData
                 for (int y = 0; y < objectSize.y; y++)
                 {
                     returnVal.Add(gridPos - new Vector3Int(x, 0, y));
+                    Debug.Log(gridPos - new Vector3Int(x, 0, y));
                 }
             }
         }
@@ -101,6 +103,10 @@ public class GridData
             {
                 return false;
             }
+            if (!placedTiles.ContainsKey(pos))
+            {
+                return false;
+            }
         }
         return true;
     }
@@ -122,6 +128,26 @@ public class GridData
             return false;
         }
     }
+
+    public int RemoveFurniture(Vector3Int gridPos)
+    {
+        int index = placedObjects[gridPos].PlacedObjectIndex;
+        foreach(KeyValuePair<Vector3Int, PlacementData> check in placedObjects.Reverse())
+        {
+            if (check.Value.PlacedObjectIndex == index)
+            {
+                placedObjects.Remove(check.Key);
+            }
+        }
+        foreach (KeyValuePair<Vector3Int, PlacementData> check in placedObjects.Reverse())
+        {
+            if (check.Value.PlacedObjectIndex > index)
+            {
+                check.Value.PlacedObjectIndex -= 1;
+            }
+        }
+        return index;
+    }
 }
 
 
@@ -129,7 +155,7 @@ public class PlacementData
 {
     public List<Vector3Int> occupiedPositions;
     public int ID { get; private set; }
-    public int PlacedObjectIndex { get; private set; }
+    public int PlacedObjectIndex { get; set; }
     public int PlacedRotation { get; private set; }
 
     public PlacementData(List<Vector3Int> occupiedPositions, int iD, int placedObjectIndex, int rotationIndex)

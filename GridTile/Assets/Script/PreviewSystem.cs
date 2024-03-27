@@ -163,4 +163,10 @@ public class PreviewSystem : MonoBehaviour
         previewObject.transform.rotation = Quaternion.Euler(0, 90 * rot, 0);
         this.rot = rot;
     }
+
+    public void UpdateRemovePosition(Vector3 pos)
+    {
+        cellIndicatorFurn.SetActive(true);
+        cellIndicatorFurn.transform.position = pos;
+    }
 }
