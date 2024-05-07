@@ -17,11 +17,20 @@ MonoBehaviour:
     <ID>k__BackingField: 0
     <Size>k__BackingField: {x: 1, y: 1}
     <Prefab>k__BackingField: {fileID: 468367544907094424, guid: 2f40209c093a05e458984ce669e9f7ca, type: 3}
+    <Thumbnail>k__BackingField: {fileID: 21300000, guid: 6ad883529ea0acf478fc90322bdcb4b8, type: 3}
+    <priceType>k__BackingField: 1
+    <priceNum>k__BackingField: 1
   - <Name>k__BackingField: Cube
     <ID>k__BackingField: 1
     <Size>k__BackingField: {x: 1, y: 1}
     <Prefab>k__BackingField: {fileID: 853703931715598118, guid: c8cd1d6c84421244eb54478e7c7d8f65, type: 3}
-  - <Name>k__BackingField: Table&Chair
+    <Thumbnail>k__BackingField: {fileID: 21300000, guid: 8c0b9f38ebc44994ebe7273069eb71f3, type: 3}
+    <priceType>k__BackingField: 0
+    <priceNum>k__BackingField: 1
+  - <Name>k__BackingField: Table &Chair
     <ID>k__BackingField: 2
     <Size>k__BackingField: {x: 2, y: 1}
     <Prefab>k__BackingField: {fileID: 853703931715598118, guid: 229ab61fca0d1774aaeaee98f12a4313, type: 3}
+    <Thumbnail>k__BackingField: {fileID: 21300000, guid: 29abe9684f27e424d960a797fa2811b4, type: 3}
+    <priceType>k__BackingField: 2
+    <priceNum>k__BackingField: 2

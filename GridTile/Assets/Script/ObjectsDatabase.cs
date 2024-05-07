@@ -20,5 +20,11 @@ public class ObjectData
     public Vector2Int Size { get; private set; } = Vector2Int.one;
     [field: SerializeField]
     public GameObject Prefab { get; private set; }
+    [field: SerializeField]
+    public Sprite Thumbnail { get; private set; }
+    [field: SerializeField]
+    public GameManager.Price priceType { get; private set; }
+    [field: SerializeField]
+    public int priceNum { get; private set; }
 
 }

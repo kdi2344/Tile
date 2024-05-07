@@ -4,14 +4,14 @@ using UnityEngine;
 
 public class PlacementSystem : MonoBehaviour
 {
-    [SerializeField] private GameObject mouseIndicator;
-    [SerializeField] private InputManager inputManager;
-    [SerializeField] private Grid gridTile;
-    [SerializeField] private Grid gridFurniture;
-    [SerializeField] private ObjectsDatabase database;
+    [SerializeField] private GameObject mouseIndicator; //마우스 위치 알려주는 구
+    [SerializeField] private InputManager inputManager; //클릭 관련
+    [SerializeField] private Grid gridTile; //타일용 그리드
+    [SerializeField] private Grid gridFurniture; //가구용 그리드
+    [SerializeField] private ObjectsDatabase database; //아이템 data
     private int selectedObjectIndex = -1;
-    [SerializeField] private GameObject gridTileVisualization;
-    [SerializeField] private GameObject gridFurnVisualization;
+    [SerializeField] private GameObject gridTileVisualization; //눈에 보이는 타일용 그리드
+    [SerializeField] private GameObject gridFurnVisualization; //눈에 보이는 가구용 그리드
     private GridData floorData, furnitureData;
     [SerializeField] private Renderer[] previewRendererTile, previewRendererFurn;
 
@@ -28,6 +28,9 @@ public class PlacementSystem : MonoBehaviour
     private int rot = 0;
     private bool isTile =false;
     private bool isRemove = false;
+    private bool isMove = false;
+
+    private bool isShowPreview = false;
 
     private int start = 0;
 
@@ -48,11 +51,26 @@ public class PlacementSystem : MonoBehaviour
     {
         Vector3 mousePos = inputManager.GetSelectedMapPosition();
         Vector3Int gridPos;
-        if (isRemove)
+        if (isRemove || isMove)
         {
             gridPos = gridFurniture.WorldToCell(mousePos);
             mouseIndicator.transform.position = mousePos;
             previewSystem.UpdateRemovePosition(gridFurniture.CellToWorld(gridPos));
+            if (isShowPreview)
+            {
+                gridPos = gridFurniture.WorldToCell(mousePos);
+                if (lastDetectedPosition != gridPos)
+                {
+                    bool placementValidity = CheckPlacementValidity(gridPos, selectedObjectIndex, rot);
+                    foreach (Renderer render in previewRendererFurn)
+                    {
+                        render.material.color = placementValidity ? Color.white : Color.red;
+                    }
+                    previewSystem.UpdatePosition(gridFurniture.CellToWorld(gridPos), placementValidity);
+                    lastDetectedPosition = gridPos;
+                }
+                mouseIndicator.transform.position = mousePos;
+            }
             return;
         }
         if (selectedObjectIndex < 0)
@@ -92,6 +110,7 @@ public class PlacementSystem : MonoBehaviour
 
     public void StartPlacement(int ID) //놓기 시작
     {
+        StopMove();
         rot = 0;
         selectedObjectIndex = database.objectData.FindIndex(data => data.ID == ID);
         if (selectedObjectIndex < 0)
@@ -104,6 +123,7 @@ public class PlacementSystem : MonoBehaviour
             gridTileVisualization.SetActive(true);
             gridFurnVisualization.SetActive(false);
             isTile = true;
+            previewSystem.isTile = true;
             previewSystem.StartShowingPlacementPreview(database.objectData[selectedObjectIndex].Prefab, database.objectData[selectedObjectIndex].Size, ID);
         }
         else
@@ -146,6 +166,13 @@ public class PlacementSystem : MonoBehaviour
             return;
         }
 
+        if (GameManager.instance.playerProperty[database.objectData[selectedObjectIndex].priceType] < database.objectData[selectedObjectIndex].priceNum)
+        {
+            return;
+        }
+        GameManager.instance.playerProperty[database.objectData[selectedObjectIndex].priceType] -= database.objectData[selectedObjectIndex].priceNum;
+        GameManager.instance.SetTopText();
+
         GameObject newObject = Instantiate(database.objectData[selectedObjectIndex].Prefab);
         if (isTile)
         {
@@ -184,11 +211,24 @@ public class PlacementSystem : MonoBehaviour
             placedGameObject.Add(newObject);
             selectedData.AddObjectAt(gridPos, database.objectData[selectedObjectIndex].Size, database.objectData[selectedObjectIndex].ID, placedGameObject.Count - 1, rot);
             previewSystem.UpdatePosition(gridFurniture.CellToWorld(gridPos), false);
+            if (isMove)
+            {
+                start = 0;
+                lastDetectedPosition = Vector3Int.zero;
+                selectedObjectIndex = -1;
+                gridFurnVisualization.SetActive(false);
+                inputManager.OnClicked -= PlaceStructure;
+                rot = 0;
+                isShowPreview = false;
+                inputManager.OnClicked += MoveFurn;
+                previewSystem.StopShowingPreview();
+            }
         }
     }
 
     private bool CheckPlacementValidity(Vector3Int gridPos, int selectedObjectIndex, int rot)
     {
+        //Debug.Log(selectedObjectIndex);
         GridData selectedData = database.objectData[selectedObjectIndex].ID == 0 ? floorData : furnitureData;
         if (selectedData == floorData) //고른게 tile이면
         {
@@ -209,6 +249,7 @@ public class PlacementSystem : MonoBehaviour
 
     public void StopPlacement() //설치 멈추기
     {
+        StopMove();
         start = 0;
         previewSystem.StopShowingPreview();
         lastDetectedPosition = Vector3Int.zero;
@@ -248,5 +289,38 @@ public class PlacementSystem : MonoBehaviour
         }
     }
 
+    public void StartMove()
+    {
+        StopPlacement();
+        gridFurnVisualization.SetActive(true);
+        isTile = false;
+        isRemove = false;
+        isMove = true;
+        inputManager.OnClicked += MoveFurn;
+    }
 
+    public void MoveFurn()
+    {
+        Vector3 mousePos = inputManager.GetSelectedMapPosition();
+        Vector3Int gridPos = gridFurniture.WorldToCell(mousePos);
+        if (furnitureData.placedObjects.ContainsKey(gridPos))
+        {
+            start = 1;
+            isShowPreview = true;
+            gridFurnVisualization.SetActive(true);
+            StartPlacement(furnitureData.placedObjects[gridPos].ID);
+            int i = furnitureData.RemoveFurniture(gridPos);
+            Destroy(furnParent.GetChild(i).gameObject);
+            inputManager.OnClicked -= MoveFurn;
+            inputManager.OnClicked += PlaceStructure;
+        }
+    }
+    public void StopMove()
+    {
+        gridFurnVisualization.SetActive(false);
+        isMove = false;
+        inputManager.OnClicked -= MoveFurn;
+        selectedObjectIndex = -1;
+        start = 0;
+    }
 }

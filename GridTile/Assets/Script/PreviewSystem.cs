@@ -16,7 +16,7 @@ public class PreviewSystem : MonoBehaviour
     private Renderer[] cellIndicatorRendererTile;
     private Renderer[] cellIndicatorRendererFurn;
 
-    private bool isTile = false;
+    public bool isTile = false;
 
     public Vector3 offset;
     private int rot = 0;
@@ -35,18 +35,19 @@ public class PreviewSystem : MonoBehaviour
         rot = 0;
         previewObject = Instantiate(prefab);
         PreparePreview(previewObject);
-        PrepareCursor(size);
         if (ID == 0)
         {
             cellIndicatorTile.SetActive(true);
             cellIndicatorFurn.SetActive(false);
             isTile = true;
+            PrepareCursor(size);
         }
         else
         {
             cellIndicatorTile.SetActive(false);
             cellIndicatorFurn.SetActive(true);
             isTile = false;
+            PrepareCursor(size);
         }
     }
 
@@ -159,9 +160,12 @@ public class PreviewSystem : MonoBehaviour
     public void RotatePreview(int rot)
     {
         Vector3 store = cellIndicatorFurn.transform.localScale;
-        cellIndicatorFurn.transform.localScale = new Vector3(store.z, 1, store.x);
-        previewObject.transform.rotation = Quaternion.Euler(0, 90 * rot, 0);
-        this.rot = rot;
+        if (store.z != store.x) 
+        {
+            cellIndicatorFurn.transform.localScale = new Vector3(store.z, 1, store.x);
+            previewObject.transform.rotation = Quaternion.Euler(0, 90 * rot, 0);
+            this.rot = rot;
+        }
     }
 
     public void UpdateRemovePosition(Vector3 pos)
